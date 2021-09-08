@@ -1,18 +1,17 @@
 
 -- 1. Еженедельная конверсия - приглашенные - оформленные (работающие).  В разрезе городов - проектов - вакансий 
-SELECT inv.project_id, inv.spec_id, inv.region_id, inv.cnt_invited, workd.cnt_working, (workd.cnt_working / inv.cnt_invited) AS convrersion FROM
-(SELECT project_id, spec_id, region_id, COUNT(*) AS cnt_invited
+SELECT inv.project_id, inv.spec_id, inv.region_id, inv.cnt_invited, workd.cnt_working, (workd.cnt_working / inv.cnt_invited) AS convrersion
+FROM (SELECT project_id, spec_id, region_id, COUNT(*) AS cnt_invited
 FROM couriers 
 WHERE created BETWEEN '2021,9,1' AND '2021,9,10'
 GROUP BY project_id, spec_id) AS inv
-JOIN 
-(SELECT project_id, spec_id, region_id, COUNT(*) AS cnt_working
-FROM couriers 
-WHERE id IN 
-(SELECT couriers.id FROM contracts 
-JOIN couriers ON contracts.courier_id = couriers.id) 
-AND created BETWEEN '2021,9,1' AND '2021,9,10'
-GROUP BY project_id, spec_id, region_id) AS workd
+JOIN (SELECT project_id, spec_id, region_id, COUNT(*) AS cnt_working
+	FROM couriers 
+	WHERE id IN 
+	(SELECT couriers.id FROM contracts 
+		JOIN couriers ON contracts.courier_id = couriers.id) 
+	AND created BETWEEN '2021,9,1' AND '2021,9,10'
+	GROUP BY project_id, spec_id, region_id) AS workd
 ON inv.project_id = workd.project_id AND inv.spec_id = workd.spec_id AND
 inv.region_id = workd.region_id;
 
@@ -49,7 +48,7 @@ WHERE ((hd.field_name = 'StateId' AND hd.value_new = 37 AND h.object_type = 3) O
 	
 	
 -- 3.2. + 3.3. Сколько из созданных или восстановленных в итоге оформлены 
-SELECT creator_id, surname, 'name', SUM(work_cnt), COUNT(*) FROM (
+SELECT creator_id, surname, 'name', COUNT(*) invited, SUM(work_cnt) working FROM (
 SELECT h.object_id, h.creator_id, u.surname, u.name, IF (COUNT(c.id) > 0, 1, 0) work_cnt FROM history_details hd
 JOIN histories h ON h.id = hd.history_id
 JOIN users u ON h.creator_id = u.id
